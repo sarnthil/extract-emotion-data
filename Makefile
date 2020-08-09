@@ -17,7 +17,7 @@ workdata/tokenized.json: scripts/retokenize.py workdata/extracted.json
 	python3 scripts/retokenize.py <workdata/extracted.json >workdata/tokenized.json
 
 # split datasets and select instances for manual annotation
-workdata/splitted.json: scripts/split.py workdata/tokenized.json
+outputs/splitted.json: scripts/split.py workdata/tokenized.json
 	python3 scripts/split.py workdata/tokenized.json >outputs/splitted.json
 
 # extract clauses from all datasets
