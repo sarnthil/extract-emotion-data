@@ -1,4 +1,4 @@
-all: workdata/splitted.json
+all: outputs/splitted.json
 
 .PHONY: all clean
 
