@@ -2,18 +2,58 @@ from collections import defaultdict, Counter
 from itertools import zip_longest
 from xml.etree.ElementTree import parse
 
-import spacy
-
 from cause_io import Instance
 
-nlp = spacy.load("en_core_web_sm")
 
-
-def tokenize(text):
-    return spacy.language.Doc(nlp.vocab, words=text.split(" "))
-
-
-nlp.tokenizer = tokenize
+def get_sentence_offsets(tokens):
+    count = 0
+    for token in tokens:
+        count += 1
+        if any(token.endswith(char) for char in [
+            "?",
+            "!",
+            ".",
+            '."',
+            '!"',
+            '?"',
+            ".'",
+            "!'",
+            "?'",
+            '."\'',
+            '!"\'',
+            '?"\'',
+            ".'\"",
+            "!'\"",
+            "?'\"",
+            "!)",
+            ".)",
+            '."]',
+        ]) and token not in [
+            "Mr.",
+            "Mrs.",
+            "Ms.",
+            "Dr.",
+            "MR.",
+            "MRS.",
+            "MS.",
+            "Messrs.",
+            "U.S.",
+            "U.K.",
+            "St.",
+            "V.",
+            "J.",
+            "C.",
+            "D.",
+            "S.",
+            "O.",
+            "I.",
+            "M.",
+            "1.",
+        ]:
+            yield count
+            count = 0
+    if count:
+        yield count
 
 
 def get_middle_sentence(text, tokens, annotations):
@@ -22,12 +62,14 @@ def get_middle_sentence(text, tokens, annotations):
         annotations = [O, O, O, O, O, O, B, I ,I , O, O, O, O]
     """
 
-    doc = nlp(" ".join(tokens))
-    sentence_offsets = [len(sent) for sent in doc.sents]
-    assert len(sentence_offsets) == 3
-    head, _, tail = sentence_offsets
-    tokens = tokens[head:tail]
-    annotations = {key: annotations[key][head:tail] for key in annotations}
+    sentence_offsets = get_sentence_offsets(tokens)
+    head, *middle, tail = sentence_offsets
+    if not middle:
+        return text, tokens, annotations
+
+
+    tokens = tokens[head:-tail]
+    annotations = {key: annotations[key][head:-tail] for key in annotations}
     text = " ".join(tokens)
     return text, tokens, annotations
 
@@ -114,6 +156,7 @@ def extract():
 
     for document in tree.iterfind("document"):
         text = document.find("text").text.replace("\t", " ")
+        tokens = text.split(" ")
         id_to_span = {
             span.attrib["annotation_id"]: span
             for span in document.find("adjudicated")

@@ -42,7 +42,7 @@ def tokenize(tokens, annotations, tokenizer=spacytok):
     tokenized = tokenizer(text)  # list of tokens
     assert text.replace(" ", "") == "".join(
         tokenized
-    ), f"Original: <{text.split()}>, New: <{tokenized}>"
+    ).replace(" ", ""), f"Original: <{text.split()}>, New: <{tokenized}>"
     return tokenized, {
         role: list(realign(tokenized, tokens_orig, annotations[role]))
         for role in annotations
