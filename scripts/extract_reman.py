@@ -2,7 +2,34 @@ from collections import defaultdict, Counter
 from itertools import zip_longest
 from xml.etree.ElementTree import parse
 
+import spacy
+
 from cause_io import Instance
+
+nlp = spacy.load("en-core-web-sm")
+
+
+def tokenize(text):
+    return spacy.language.Doc(nlp.vocab, words=text.split(" "))
+
+
+nlp.tokenizer = tokenize
+
+
+def get_middle_sentence(text, tokens, annotations):
+    """ text = "A B C D E F . G H I . J K L"
+        tokens = [A, B, C, D, E, F, ., G, H, I, ., J, K, L]
+        annotations = [O, O, O, O, O, O, B, I ,I , O, O, O, O]
+    """
+
+    doc = nlp(tokens.join(" "))
+    sentence_offsets = [len(sent) for sent in doc.sents]
+    assert len(sentence_offsets) == 3
+    head, _, tail = sentence_offsets
+    tokens = tokens[head:tail]
+    annotations = {key: annotations[key][head:tail] for key in annotations}
+    text = " ".join(tokens)
+    return text, tokens, annotations
 
 
 def join_spans(spans):
@@ -128,13 +155,21 @@ def extract():
                 continue
 
             emotions.add(span.attrib["type"])
-            cue_offsets[span.attrib["type"]].append((int(span.attrib["cbegin"]), int(span.attrib["cend"])))
+            cue_offsets[span.attrib["type"]].append(
+                (int(span.attrib["cbegin"]), int(span.attrib["cend"]))
+            )
 
         for emotion in cue_offsets:
-            tokens, annotations[f"cue-{emotion}"] = annotations_from_offsets(text, cue_offsets[emotion])
+            tokens, annotations[f"cue-{emotion}"] = annotations_from_offsets(
+                text, cue_offsets[emotion]
+            )
 
         if not emotions:
             emotions = ["noemo"]
+
+        text, tokens, annotations = get_middle_sentence(
+            text, tokens, annotations
+        )
 
         yield Instance(
             text=text,
