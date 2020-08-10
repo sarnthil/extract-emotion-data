@@ -22,7 +22,7 @@ def get_middle_sentence(text, tokens, annotations):
         annotations = [O, O, O, O, O, O, B, I ,I , O, O, O, O]
     """
 
-    doc = nlp(tokens.join(" "))
+    doc = nlp(" ".join(tokens))
     sentence_offsets = [len(sent) for sent in doc.sents]
     assert len(sentence_offsets) == 3
     head, _, tail = sentence_offsets
