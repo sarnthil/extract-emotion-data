@@ -98,8 +98,8 @@ def extract():
             document.find("adjudicated").find("relations").iterfind("relation")
         ):
             relation_type = relation.attrib["type"]
-            # if relation_type != "cause":
-            #     continue
+            if relation_type not in ["target", "experiencer", "cause"]:
+                continue
             role_relations[relation_type].append(relation)
 
         annotations = {}
