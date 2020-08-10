@@ -6,7 +6,7 @@ import spacy
 
 from cause_io import Instance
 
-nlp = spacy.load("en-core-web-sm")
+nlp = spacy.load("en_core_web_sm")
 
 
 def tokenize(text):
